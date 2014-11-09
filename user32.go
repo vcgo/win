@@ -629,8 +629,8 @@ const (
 	WS_TILED            = 0X00000000
 	WS_ICONIC           = 0X20000000
 	WS_SIZEBOX          = 0X00040000
-	WS_OVERLAPPEDWINDOW = 0X00000000 | 0X00C00000 | 0X00080000 | 0X00040000 | 0X00020000 | 0X00010000
-	WS_POPUPWINDOW      = 0X80000000 | 0X00800000 | 0X00080000
+	WS_OVERLAPPEDWINDOW = 0X00000000|0X00C00000|0X00080000|0X00040000|0X00020000 | 0X00010000
+	WS_POPUPWINDOW      = 0X80000000|0X00800000 | 0X00080000
 	WS_CHILDWINDOW      = 0X40000000
 )
 
@@ -656,7 +656,7 @@ const (
 	WS_EX_STATICEDGE       = 0X00020000
 	WS_EX_APPWINDOW        = 0X00040000
 	WS_EX_OVERLAPPEDWINDOW = 0X00000100 | 0X00000200
-	WS_EX_PALETTEWINDOW    = 0X00000100 | 0X00000080 | 0X00000008
+	WS_EX_PALETTEWINDOW    = 0X00000100|0X00000080 | 0X00000008
 	WS_EX_LAYERED          = 0X00080000
 	WS_EX_NOINHERITLAYOUT  = 0X00100000
 	WS_EX_LAYOUTRTL        = 0X00400000
@@ -1464,6 +1464,9 @@ var (
 	getKeyState                uintptr
 	getMenuInfo                uintptr
 	getMessage                 uintptr
+	setWindowText              uintptr
+	getWindowTextLength        uintptr
+	getWindowText              uintptr
 	getMonitorInfo             uintptr
 	getParent                  uintptr
 	getRawInputData            uintptr
@@ -1577,6 +1580,9 @@ func init() {
 	getKeyState = MustGetProcAddress(libuser32, "GetKeyState")
 	getMenuInfo = MustGetProcAddress(libuser32, "GetMenuInfo")
 	getMessage = MustGetProcAddress(libuser32, "GetMessageW")
+	setWindowText = MustGetProcAddress(libuser32, "SetWindowTextW")
+	getWindowTextLength = MustGetProcAddress(libuser32, "GetWindowTextLengthW")
+	getWindowText = MustGetProcAddress(libuser32, "GetWindowTextW")
 	getMonitorInfo = MustGetProcAddress(libuser32, "GetMonitorInfoW")
 	getParent = MustGetProcAddress(libuser32, "GetParent")
 	getRawInputData = MustGetProcAddress(libuser32, "GetRawInputData")
@@ -2029,6 +2035,34 @@ func GetMessage(msg *MSG, hWnd HWND, msgFilterMin, msgFilterMax uint32) BOOL {
 		0)
 
 	return BOOL(ret)
+}
+
+func SetWindowText(hWnd HWND, text string) bool {
+	lpText := syscall.StringToUTF16Ptr(text)
+	ret, _, _ := syscall.Syscall(setWindowText, 2,
+		uintptr(hWnd),
+		uintptr(unsafe.Pointer(lpText)),
+		0)
+
+	return ret != 0
+}
+
+func GetWindowTextLength(hWnd HWND) int {
+	ret, _, _ := syscall.Syscall(getWindowTextLength, 1,
+		uintptr(hWnd), 0, 0)
+
+	return int(ret)
+}
+
+func GetWindowText(hWnd HWND) string {
+	textLen := GetWindowTextLength(hWnd) + 1
+	buf := make([]uint16, textLen)
+	syscall.Syscall(getWindowText, 3,
+		uintptr(hWnd),
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(textLen))
+
+	return syscall.UTF16ToString(buf)
 }
 
 func GetMonitorInfo(hMonitor HMONITOR, lpmi *MONITORINFO) bool {

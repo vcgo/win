@@ -1433,6 +1433,7 @@ var (
 	clientToScreen             uintptr
 	closeClipboard             uintptr
 	createDialogParam          uintptr
+	getDlgItem                 uintptr
 	createIconIndirect         uintptr
 	createMenu                 uintptr
 	createPopupMenu            uintptr
@@ -1549,6 +1550,7 @@ func init() {
 	clientToScreen = MustGetProcAddress(libuser32, "ClientToScreen")
 	closeClipboard = MustGetProcAddress(libuser32, "CloseClipboard")
 	createDialogParam = MustGetProcAddress(libuser32, "CreateDialogParamW")
+	getDlgItem = MustGetProcAddress(libuser32, "GetDlgItem")
 	createIconIndirect = MustGetProcAddress(libuser32, "CreateIconIndirect")
 	createMenu = MustGetProcAddress(libuser32, "CreateMenu")
 	createPopupMenu = MustGetProcAddress(libuser32, "CreatePopupMenu")
@@ -1726,6 +1728,15 @@ func CreateDialogParam(instRes HINSTANCE, name *uint16, parent HWND,
 		uintptr(parent),
 		proc,
 		param,
+		0)
+
+	return HWND(ret)
+}
+
+func GetDlgItem(hDlg HWND, nIDDlgItem uintptr) HWND {
+	ret, _, _ := syscall.Syscall(getDlgItem, 2,
+		uintptr(unsafe.Pointer(hDlg)),
+		uintptr(nIDDlgItem),
 		0)
 
 	return HWND(ret)

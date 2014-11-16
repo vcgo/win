@@ -1475,6 +1475,7 @@ var (
 	getSysColorBrush           uintptr
 	getSystemMetrics           uintptr
 	getWindow                  uintptr
+	getDesktopWindow           uintptr
 	getWindowLong              uintptr
 	getWindowLongPtr           uintptr
 	getWindowPlacement         uintptr
@@ -1592,6 +1593,7 @@ func init() {
 	getSysColorBrush = MustGetProcAddress(libuser32, "GetSysColorBrush")
 	getSystemMetrics = MustGetProcAddress(libuser32, "GetSystemMetrics")
 	getWindow = MustGetProcAddress(libuser32, "GetWindow")
+	getDesktopWindow = MustGetProcAddress(libuser32, "GetDesktopWindow")
 	getWindowLong = MustGetProcAddress(libuser32, "GetWindowLongW")
 	// On 32 bit GetWindowLongPtrW is not available
 	if is64bit {
@@ -2137,6 +2139,15 @@ func GetWindow(hWnd HWND, uCmd uint32) HWND {
 	ret, _, _ := syscall.Syscall(getWindow, 2,
 		uintptr(hWnd),
 		uintptr(uCmd),
+		0)
+
+	return HWND(ret)
+}
+
+func GetDesktopWindow() HWND {
+	ret, _, _ := syscall.Syscall(getDesktopWindow, 0,
+		0,
+		0,
 		0)
 
 	return HWND(ret)

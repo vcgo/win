@@ -1291,6 +1291,21 @@ type NMHDR struct {
 	Code     uint32
 }
 
+type WINDOWPOS struct {
+	Wnd            HWND
+	WndInsertAfter HWND
+	X              int
+	Y              int
+	CX             int
+	CY             int
+	Flags          uint32
+}
+
+type NCCALCSIZE_PARAMS struct {
+	Rgrc [3]RECT
+	Pos  *WINDOWPOS
+}
+
 type CREATESTRUCT struct {
 	CreateParams    uintptr
 	Instance        HINSTANCE
@@ -1538,6 +1553,7 @@ var (
 	registerClassEx            uintptr
 	registerRawInputDevices    uintptr
 	registerWindowMessage      uintptr
+	getCapture                 uintptr
 	releaseCapture             uintptr
 	releaseDC                  uintptr
 	removeMenu                 uintptr
@@ -1552,6 +1568,7 @@ var (
 	setCursorPos               uintptr
 	setFocus                   uintptr
 	setForegroundWindow        uintptr
+	setLayeredWindowAttributes uintptr
 	setMenu                    uintptr
 	setMenuInfo                uintptr
 	setMenuItemInfo            uintptr
@@ -1661,6 +1678,7 @@ func init() {
 	registerClassEx = MustGetProcAddress(libuser32, "RegisterClassExW")
 	registerRawInputDevices = MustGetProcAddress(libuser32, "RegisterRawInputDevices")
 	registerWindowMessage = MustGetProcAddress(libuser32, "RegisterWindowMessageW")
+	getCapture = MustGetProcAddress(libuser32, "GetCapture")
 	releaseCapture = MustGetProcAddress(libuser32, "ReleaseCapture")
 	releaseDC = MustGetProcAddress(libuser32, "ReleaseDC")
 	removeMenu = MustGetProcAddress(libuser32, "RemoveMenu")
@@ -1675,6 +1693,7 @@ func init() {
 	setCursorPos = MustGetProcAddress(libuser32, "SetCursorPos")
 	setFocus = MustGetProcAddress(libuser32, "SetFocus")
 	setForegroundWindow = MustGetProcAddress(libuser32, "SetForegroundWindow")
+	setLayeredWindowAttributes = MustGetProcAddress(libuser32, "SetLayeredWindowAttributes")
 	setMenu = MustGetProcAddress(libuser32, "SetMenu")
 	setMenuInfo = MustGetProcAddress(libuser32, "SetMenuInfo")
 	setMenuItemInfo = MustGetProcAddress(libuser32, "SetMenuItemInfoW")
@@ -2480,6 +2499,15 @@ func RegisterWindowMessage(lpString *uint16) uint32 {
 	return uint32(ret)
 }
 
+func GetCapture() HWND {
+	ret, _, _ := syscall.Syscall(releaseCapture, 0,
+		0,
+		0,
+		0)
+
+	return HWND(ret)
+}
+
 func ReleaseCapture() bool {
 	ret, _, _ := syscall.Syscall(releaseCapture, 0,
 		0,
@@ -2611,6 +2639,18 @@ func SetForegroundWindow(hWnd HWND) bool {
 		0)
 
 	return ret != 0
+}
+
+func SetLayeredWindowAttributes(hWnd HWND, crKey COLORREF, alpha byte, flags uint32) uint32 {
+	ret, _, _ := syscall.Syscall6(setLayeredWindowAttributes, 4,
+		uintptr(hWnd),
+		uintptr(crKey),
+		uintptr(alpha),
+		uintptr(flags),
+		0,
+		0)
+
+	return uint32(ret)
 }
 
 func SetMenu(hWnd HWND, hMenu HMENU) bool {

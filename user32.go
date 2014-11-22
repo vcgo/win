@@ -1517,6 +1517,8 @@ var (
 	getWindowTextLength        uintptr
 	getWindowText              uintptr
 	getMonitorInfo             uintptr
+	getProp					   uintptr
+	setProp					   uintptr
 	getParent                  uintptr
 	getRawInputData            uintptr
 	getSysColor                uintptr
@@ -1637,6 +1639,8 @@ func init() {
 	getWindowTextLength = MustGetProcAddress(libuser32, "GetWindowTextLengthW")
 	getWindowText = MustGetProcAddress(libuser32, "GetWindowTextW")
 	getMonitorInfo = MustGetProcAddress(libuser32, "GetMonitorInfoW")
+	getProp = MustGetProcAddress(libuser32, "GetPropW")
+	setProp = MustGetProcAddress(libuser32, "SetPropW")
 	getParent = MustGetProcAddress(libuser32, "GetParent")
 	getRawInputData = MustGetProcAddress(libuser32, "GetRawInputData")
 	getSysColor = MustGetProcAddress(libuser32, "GetSysColor")
@@ -2137,6 +2141,26 @@ func GetMonitorInfo(hMonitor HMONITOR, lpmi *MONITORINFO) bool {
 		0)
 
 	return ret != 0
+}
+
+func GetProp(hWnd HWND, lpString string) HANDLE {
+	lpText := syscall.StringToUTF16Ptr(lpString)
+	ret, _, _ := syscall.Syscall(getProp, 2,
+		uintptr(hWnd),
+		uintptr(unsafe.Pointer(lpText)),
+		0)
+
+	return HANDLE(ret)
+}
+
+func SetProp(hWnd HWND, lpString string, hData HANDLE) BOOL {
+	lpText := syscall.StringToUTF16Ptr(lpString)
+	ret, _, _ := syscall.Syscall(setProp, 3,
+		uintptr(hWnd),
+		uintptr(unsafe.Pointer(lpText)),
+		uintptr(hData))
+
+	return BOOL(ret)
 }
 
 func GetParent(hWnd HWND) HWND {

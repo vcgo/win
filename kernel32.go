@@ -73,6 +73,7 @@ var (
 	setLastError           uintptr
 	systemTimeToFileTime   uintptr
 	getProfileString       uintptr
+	setConsoleTitle		   uintptr
 )
 
 type (
@@ -132,6 +133,7 @@ func init() {
 	mulDiv = MustGetProcAddress(libkernel32, "MulDiv")
 	setLastError = MustGetProcAddress(libkernel32, "SetLastError")
 	systemTimeToFileTime = MustGetProcAddress(libkernel32, "SystemTimeToFileTime")
+	setConsoleTitle = MustGetProcAddress(libkernel32, "SetConsoleTitleW")
 
 }
 
@@ -298,4 +300,12 @@ func SystemTimeToFileTime(lpSystemTime *SYSTEMTIME, lpFileTime *FILETIME) bool {
 		0)
 
 	return ret != 0
+}
+
+func SetConsoleTitle(title string) int {
+	ret, _, callErr := syscall.Syscall(setConsoleTitle, 1, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))), 0, 0)
+	if callErr != 0 {
+		//fmt.Println("callErr", callErr)
+	}
+	return int(ret)
 }

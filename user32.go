@@ -1503,6 +1503,10 @@ var (
 	endPaint                   uintptr
 	enumChildWindows           uintptr
 	findWindow                 uintptr
+	getClassInfoEx			   uintptr
+	getClassInfo			   uintptr
+	getClassLong			   uintptr
+	getClassName			   uintptr
 	getAncestor                uintptr
 	getCaretPos                uintptr
 	getClientRect              uintptr
@@ -1625,6 +1629,10 @@ func init() {
 	endPaint = MustGetProcAddress(libuser32, "EndPaint")
 	enumChildWindows = MustGetProcAddress(libuser32, "EnumChildWindows")
 	findWindow = MustGetProcAddress(libuser32, "FindWindowW")
+	getClassInfoEx = MustGetProcAddress(libuser32, "GetClassInfoExW")
+	getClassInfo = MustGetProcAddress(libuser32, "GetClassInfoW")
+	getClassLong = MustGetProcAddress(libuser32, "GetClassLongW")
+	getClassName = MustGetProcAddress(libuser32, "GetClassNameW")
 	getAncestor = MustGetProcAddress(libuser32, "GetAncestor")
 	getCaretPos = MustGetProcAddress(libuser32, "GetCaretPos")
 	getClientRect = MustGetProcAddress(libuser32, "GetClientRect")
@@ -2011,6 +2019,46 @@ func FindWindow(lpClassName, lpWindowName *uint16) HWND {
 		0)
 
 	return HWND(ret)
+}
+
+func GetClassInfoEx(instance HINSTANCE, className string, wcx * WNDCLASSEX) bool {
+	class := syscall.StringToUTF16Ptr(className)
+	ret, _, _ := syscall.Syscall(getClassInfoEx, 3,
+		uintptr(unsafe.Pointer(instance)),
+		uintptr(unsafe.Pointer(class)),
+		uintptr(unsafe.Pointer(wcx)))
+
+	return ret != 0
+}
+
+func GetClassInfo(instance HINSTANCE, className string, wcx *WNDCLASSEX) bool {
+	class := syscall.StringToUTF16Ptr(className)
+	ret, _, _ := syscall.Syscall(getClassInfo, 3,
+		uintptr(unsafe.Pointer(instance)),
+		uintptr(unsafe.Pointer(class)),
+		uintptr(unsafe.Pointer(wcx)))
+
+	return ret != 0
+}
+
+func GetClassLong(w HWND, index int32) int32 {
+	ret, _, _ := syscall.Syscall(getClassLong, 2,
+		uintptr(unsafe.Pointer(w)),
+		uintptr(index),
+		0)
+
+	return int32(ret)
+}
+
+func GetClassName(w HWND) string {
+	maxCount := 128
+	buf := make([]uint16, maxCount)
+	_, _, _ = syscall.Syscall(getClassName, 3,
+		uintptr(unsafe.Pointer(w)),
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(maxCount))
+
+	return syscall.UTF16ToString(buf)
 }
 
 func GetAncestor(hWnd HWND, gaFlags uint32) HWND {

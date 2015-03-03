@@ -604,6 +604,14 @@ const (
 	VK_OEM_CLEAR           = 0xFE
 )
 
+const (
+	MAPVK_VK_TO_VSC    = 0
+	MAPVK_VSC_TO_VK    = 1
+	MAPVK_VK_TO_CHAR   = 2
+	MAPVK_VSC_TO_VK_EX = 3
+	MAPVK_VK_TO_VSC_EX = 4
+)
+
 // Window style constants
 const (
 	WS_OVERLAPPED       = 0X00000000
@@ -1503,10 +1511,10 @@ var (
 	endPaint                   uintptr
 	enumChildWindows           uintptr
 	findWindow                 uintptr
-	getClassInfoEx			   uintptr
-	getClassInfo			   uintptr
-	getClassLong			   uintptr
-	getClassName			   uintptr
+	getClassInfoEx             uintptr
+	getClassInfo               uintptr
+	getClassLong               uintptr
+	getClassName               uintptr
 	getAncestor                uintptr
 	getCaretPos                uintptr
 	getClientRect              uintptr
@@ -1515,14 +1523,16 @@ var (
 	getDC                      uintptr
 	getFocus                   uintptr
 	getKeyState                uintptr
+	vkKeyScan                  uintptr
+	mapVirtualKey              uintptr
 	getMenuInfo                uintptr
 	getMessage                 uintptr
 	setWindowText              uintptr
 	getWindowTextLength        uintptr
 	getWindowText              uintptr
 	getMonitorInfo             uintptr
-	getProp					   uintptr
-	setProp					   uintptr
+	getProp                    uintptr
+	setProp                    uintptr
 	getParent                  uintptr
 	getRawInputData            uintptr
 	getSysColor                uintptr
@@ -1641,6 +1651,8 @@ func init() {
 	getDC = MustGetProcAddress(libuser32, "GetDC")
 	getFocus = MustGetProcAddress(libuser32, "GetFocus")
 	getKeyState = MustGetProcAddress(libuser32, "GetKeyState")
+	vkKeyScan = MustGetProcAddress(libuser32, "VkKeyScanW")
+	mapVirtualKey = MustGetProcAddress(libuser32, "MapVirtualKeyW")
 	getMenuInfo = MustGetProcAddress(libuser32, "GetMenuInfo")
 	getMessage = MustGetProcAddress(libuser32, "GetMessageW")
 	setWindowText = MustGetProcAddress(libuser32, "SetWindowTextW")
@@ -2021,7 +2033,7 @@ func FindWindow(lpClassName, lpWindowName *uint16) HWND {
 	return HWND(ret)
 }
 
-func GetClassInfoEx(instance HINSTANCE, className string, wcx * WNDCLASSEX) bool {
+func GetClassInfoEx(instance HINSTANCE, className string, wcx *WNDCLASSEX) bool {
 	class := syscall.StringToUTF16Ptr(className)
 	ret, _, _ := syscall.Syscall(getClassInfoEx, 3,
 		uintptr(unsafe.Pointer(instance)),
@@ -2131,6 +2143,22 @@ func GetKeyState(nVirtKey int32) int16 {
 		0)
 
 	return int16(ret)
+}
+
+func VkKeyScan(ch uint16) int16 {
+	ret, _, _ := syscall.Syscall(vkKeyScan, uintptr(ch),
+		0,
+		0,
+		0)
+	return int16(ret)
+}
+
+func MapVirtualKey(uCode, uMapType uint32) uint32 {
+	ret, _, _ := syscall.Syscall(mapVirtualKey, uintptr(uCode),
+		uintptr(uMapType),
+		0,
+		0)
+	return uint32(ret)
 }
 
 func GetMenuInfo(hmenu HMENU, lpcmi *MENUINFO) bool {

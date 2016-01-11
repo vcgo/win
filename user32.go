@@ -1583,6 +1583,7 @@ var (
 	setCursor                  uintptr
 	setCursorPos               uintptr
 	setFocus                   uintptr
+	getForegroundWindow        uintptr
 	setForegroundWindow        uintptr
 	setLayeredWindowAttributes uintptr
 	setMenu                    uintptr
@@ -1716,6 +1717,7 @@ func init() {
 	setCursor = MustGetProcAddress(libuser32, "SetCursor")
 	setCursorPos = MustGetProcAddress(libuser32, "SetCursorPos")
 	setFocus = MustGetProcAddress(libuser32, "SetFocus")
+	getForegroundWindow = MustGetProcAddress(libuser32, "GetForegroundWindow")
 	setForegroundWindow = MustGetProcAddress(libuser32, "SetForegroundWindow")
 	setLayeredWindowAttributes = MustGetProcAddress(libuser32, "SetLayeredWindowAttributes")
 	setMenu = MustGetProcAddress(libuser32, "SetMenu")
@@ -2726,6 +2728,15 @@ func SetCursorPos(X, Y int32) bool {
 func SetFocus(hWnd HWND) HWND {
 	ret, _, _ := syscall.Syscall(setFocus, 1,
 		uintptr(hWnd),
+		0,
+		0)
+
+	return HWND(ret)
+}
+
+func GetForegroundWindow() HWND {
+	ret, _, _ := syscall.Syscall(getForegroundWindow, 0,
+		0,
 		0,
 		0)
 

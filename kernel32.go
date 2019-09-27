@@ -73,7 +73,8 @@ var (
 	setLastError           uintptr
 	systemTimeToFileTime   uintptr
 	getProfileString       uintptr
-	setConsoleTitle		   uintptr
+	setConsoleTitle        uintptr
+	getTickCount           uintptr
 )
 
 type (
@@ -134,6 +135,8 @@ func init() {
 	setLastError = MustGetProcAddress(libkernel32, "SetLastError")
 	systemTimeToFileTime = MustGetProcAddress(libkernel32, "SystemTimeToFileTime")
 	setConsoleTitle = MustGetProcAddress(libkernel32, "SetConsoleTitleW")
+
+	getTickCount = MustGetProcAddress(libkernel32, "GetTickCount")
 
 }
 
@@ -308,4 +311,12 @@ func SetConsoleTitle(title string) int {
 		//fmt.Println("callErr", callErr)
 	}
 	return int(ret)
+}
+
+func GetTickCount() int64 {
+	ret, _, _ := syscall.Syscall(getTickCount, 0,
+		0,
+		0,
+		0)
+	return int64(ret)
 }

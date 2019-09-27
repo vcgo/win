@@ -1602,6 +1602,7 @@ var (
 	translateMessage           uintptr
 	updateWindow               uintptr
 	windowFromPoint            uintptr
+	sendMessageTimeout         uintptr
 )
 
 func init() {
@@ -1741,6 +1742,7 @@ func init() {
 	translateMessage = MustGetProcAddress(libuser32, "TranslateMessage")
 	updateWindow = MustGetProcAddress(libuser32, "UpdateWindow")
 	windowFromPoint = MustGetProcAddress(libuser32, "WindowFromPoint")
+	sendMessageTimeout = MustGetProcAddress(libuser32, "SendMessageTimeoutW")
 }
 
 func AdjustWindowRect(lpRect *RECT, dwStyle uint32, bMenu bool) bool {
@@ -2680,6 +2682,21 @@ func SendMessage(hWnd HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	return ret
 }
 
+// SendMessageTimeout
+func SendMessageTimeout(hWnd HWND, msg uint32, wParam, lParam uintptr, fuFlags, uTimeout uint32, lpdwResult uintptr) bool {
+	ret, _, _ := syscall.Syscall9(sendMessageTimeout, 7,
+		uintptr(hWnd),
+		uintptr(msg),
+		wParam,
+		lParam,
+		uintptr(fuFlags),
+		uintptr(uTimeout),
+		lpdwResult,
+		0,
+		0)
+
+	return ret == 0
+}
 func SetActiveWindow(hWnd HWND) HWND {
 	ret, _, _ := syscall.Syscall(setActiveWindow, 1,
 		uintptr(hWnd),
